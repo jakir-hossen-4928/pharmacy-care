@@ -1,8 +1,7 @@
-import { useState } from "react";
+
 import { Medicine } from "@/lib/types";
 import MedicineCard from "./MedicineCard";
 import { FileWarning } from "lucide-react";
-import { toast } from "sonner";
 
 interface MedicineListProps {
   medicines: Medicine[];
@@ -17,13 +16,6 @@ const MedicineList = ({
   error,
   onAddToCart
 }: MedicineListProps) => {
-  const [cartItems, setCartItems] = useState<Medicine[]>([]);
-
-  const handleAddToCart = (medicine: Medicine) => {
-    setCartItems([...cartItems, medicine]);
-    onAddToCart(medicine);
-    toast.success(`${medicine.name} added to cart`);
-  };
 
   if (isLoading) {
     return (
@@ -70,7 +62,7 @@ const MedicineList = ({
         <MedicineCard
           key={medicine.id}
           medicine={medicine}
-          onAddToCart={handleAddToCart}
+          onAddToCart={onAddToCart}
         />
       ))}
     </div>

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Phone, ShoppingCart } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 
 interface NavbarMobileMenuProps {
   isMenuOpen: boolean;
@@ -18,6 +19,8 @@ const NavbarMobileMenu = ({
   setSearchQuery,
   handleSearch,
 }: NavbarMobileMenuProps) => {
+  const { cartCount } = useCart();
+  
   if (!isMenuOpen) return null;
 
   return (
@@ -49,7 +52,7 @@ const NavbarMobileMenu = ({
         <Link to="/cart" className="relative">
           <ShoppingCart className="h-6 w-6 text-gray-700" />
           <span className="absolute -top-2 -right-2 bg-pharmacy-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-            0
+            {cartCount}
           </span>
         </Link>
       </div>

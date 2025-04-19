@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import { ShoppingCart, Menu, X, Phone, Search } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import NavbarSearchForm from "../navbar/NavbarSearchForm";
@@ -11,6 +12,7 @@ import NavbarDesktopNav from "../navbar/NavbarDesktopNav";
 
 const Navbar = () => {
   const { currentUser, userDetails, logout } = useAuth();
+  const { cartCount } = useCart();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -72,7 +74,7 @@ const Navbar = () => {
           <Link to="/cart" className="relative">
             <ShoppingCart className="h-6 w-6 text-gray-700" />
             <span className="absolute -top-2 -right-2 bg-pharmacy-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-              0
+              {cartCount}
             </span>
           </Link>
 
