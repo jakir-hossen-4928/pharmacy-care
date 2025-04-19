@@ -19,26 +19,24 @@ const MedicineCard = ({ medicine, onAddToCart }: MedicineCardProps) => {
   return (
     <Card className="h-full overflow-hidden transition-all duration-200 hover:shadow-md group">
       <div className="relative">
-        {/* Stock Badge */}
-        {stock > 0 ? (
-          <Badge className="absolute top-2 left-2 z-10 bg-green-500 hover:bg-green-600">
-            In Stock
-          </Badge>
-        ) : (
-          <Badge className="absolute top-2 left-2 z-10 bg-red-500 hover:bg-red-600">
-            Out of Stock
-          </Badge>
-        )}
-        
-        {/* Discount Badge */}
-        {discount && discount > 0 && (
-          <Badge variant="destructive" className="absolute top-2 right-2 z-10">
-            {discount}% OFF
-          </Badge>
-        )}
+        <div className="absolute top-2 left-2 z-10 flex flex-col gap-2">
+          {stock > 0 ? (
+            <Badge className="bg-green-500 hover:bg-green-600">
+              In Stock
+            </Badge>
+          ) : (
+            <Badge className="bg-red-500 hover:bg-red-600">
+              Out of Stock
+            </Badge>
+          )}
+          {discount && discount > 0 && (
+            <Badge variant="destructive">
+              {discount}% OFF
+            </Badge>
+          )}
+        </div>
 
-        {/* Image */}
-        <div className="h-48 overflow-hidden bg-gray-100">
+        <div className="h-40 sm:h-48 overflow-hidden bg-gray-100">
           <img
             src={imageUrl}
             alt={name}
@@ -47,39 +45,35 @@ const MedicineCard = ({ medicine, onAddToCart }: MedicineCardProps) => {
         </div>
       </div>
 
-      <CardContent className="p-4">
-        {/* Category */}
+      <CardContent className="p-3 sm:p-4">
         <div className="mb-1">
           <Badge variant="outline" className="text-xs">
             {category}
           </Badge>
         </div>
         
-        {/* Name */}
-        <h3 className="font-medium text-lg mb-2 line-clamp-2 h-14">{name}</h3>
+        <h3 className="font-medium text-base sm:text-lg mb-2 line-clamp-2 min-h-[2.5rem]">{name}</h3>
         
-        {/* Price */}
-        <div className="flex items-center mb-4">
+        <div className="flex items-center mb-3 sm:mb-4">
           {discount && discount > 0 ? (
             <>
-              <span className="text-lg font-bold text-pharmacy-primary">
+              <span className="text-base sm:text-lg font-bold text-pharmacy-primary">
                 {discountedPrice.toFixed(2)} TK
               </span>
-              <span className="ml-2 text-sm text-gray-500 line-through">
+              <span className="ml-2 text-xs sm:text-sm text-gray-500 line-through">
                 {price.toFixed(2)} TK
               </span>
             </>
           ) : (
-            <span className="text-lg font-bold text-pharmacy-primary">
+            <span className="text-base sm:text-lg font-bold text-pharmacy-primary">
               {price.toFixed(2)} TK
             </span>
           )}
         </div>
         
-        {/* Actions */}
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
-            className="flex-1 bg-pharmacy-primary hover:bg-pharmacy-dark"
+            className="w-full bg-pharmacy-primary hover:bg-pharmacy-dark text-sm"
             onClick={() => onAddToCart(medicine)}
             disabled={stock <= 0}
           >
@@ -87,8 +81,8 @@ const MedicineCard = ({ medicine, onAddToCart }: MedicineCardProps) => {
             Add to Cart
           </Button>
           
-          <Link to={`/medicine/${id}`} className="flex-none">
-            <Button variant="outline" size="icon">
+          <Link to={`/medicine/${id}`} className="w-full sm:w-auto">
+            <Button variant="outline" size="icon" className="w-full sm:w-10">
               <Eye size={16} />
             </Button>
           </Link>
