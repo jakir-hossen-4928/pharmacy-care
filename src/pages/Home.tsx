@@ -1,21 +1,26 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import HeroSection from "@/components/common/HeroSection";
 import MedicineList from "@/components/medicines/MedicineList";
 import SearchBar from "@/components/medicines/SearchBar";
-import Categories from "@/components/medicines/Categories";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
-import { mockMedicines } from "@/lib/mockData";
+import { categories, mockMedicines } from "@/lib/mockData";
 import { Medicine } from "@/lib/types";
 
 const Home = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [filteredMedicines, setFilteredMedicines] = useState<Medicine[]>(mockMedicines);
-
   const handleAddToCart = (medicine: Medicine) => {
     console.log("Added to cart:", medicine);
+  };
+
+  const getCategoryMedicines = (categoryId: string, limit = 4) => {
+    return mockMedicines
+      .filter(med => {
+        const category = categories.find(cat => cat.id === categoryId);
+        return category && med.category === category.name;
+      })
+      .slice(0, limit);
   };
 
   return (
@@ -33,34 +38,33 @@ const Home = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Categories Sidebar */}
-          <div className="md:col-span-1">
-            <Categories />
-          </div>
-
-          {/* Products Section */}
-          <div className="md:col-span-3">
-            {/* Featured Products */}
-            <section className="mb-12">
-              <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold">Featured Products</h2>
-                <Link to="/products">
+        {/* Categories with Products */}
+        {categories.map((category) => {
+          const categoryMedicines = getCategoryMedicines(category.id);
+          
+          // Only show categories that have products
+          if (categoryMedicines.length === 0) return null;
+          
+          return (
+            <section key={category.id} className="mb-12">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-pharmacy-primary">{category.name}</h2>
+                <Link to={`/category/${category.id}`}>
                   <Button variant="outline" className="flex items-center">
-                    View All <ChevronRight size={16} className="ml-1" />
+                    See All <ChevronRight size={16} className="ml-1" />
                   </Button>
                 </Link>
               </div>
 
-              <MedicineList 
-                medicines={filteredMedicines} 
-                isLoading={false} 
+              <MedicineList
+                medicines={categoryMedicines}
+                isLoading={false}
                 error=""
                 onAddToCart={handleAddToCart}
               />
             </section>
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );

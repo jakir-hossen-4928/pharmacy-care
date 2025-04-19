@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +16,7 @@ import AdminLayout from "@/components/layout/AdminLayout";
 // Public Pages
 import Home from "@/pages/Home";
 import NotFound from "@/pages/NotFound";
+import CategoryPage from "@/pages/CategoryPage";
 
 // Auth Pages
 import Login from "@/pages/auth/Login";
@@ -40,6 +42,8 @@ const App = () => (
             {/* Public Routes */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/category/:categoryId" element={<CategoryPage />} />
+              <Route path="/category/:categoryId/:subcategory" element={<CategoryPage />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
             </Route>
 
