@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react";
 import { categories, mockMedicines } from "@/lib/mockData";
 import { Medicine } from "@/lib/types";
 import { toast } from "sonner";
+import Hero from "@/components/common/Hero";
 
 const Home = () => {
   const handleAddToCart = (medicine: Medicine) => {
@@ -23,6 +24,7 @@ const Home = () => {
 
   return (
     <div>
+      <Hero />
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Categories with Products */}

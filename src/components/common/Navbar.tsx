@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ShoppingCart, Menu, X, Phone, Search, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const { currentUser, userDetails, logout } = useAuth();
@@ -232,55 +232,6 @@ const Navbar = () => {
           </nav>
         </div>
       )}
-
-      {/* User Auth Section */}
-      <div className="flex justify-end items-center bg-gray-100 px-4 py-1 md:px-8">
-        {currentUser ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center">
-                <User size={16} className="mr-2" />
-                {userDetails?.name || "Account"}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                Dashboard
-              </DropdownMenuItem>
-              {userDetails?.role === "admin" && (
-                <DropdownMenuItem onClick={() => navigate("/admin")}>
-                  Admin Panel
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem onClick={() => navigate("/dashboard/profile")}>
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/dashboard/orders")}>
-                My Orders
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <div className="flex space-x-4">
-            <Link to="/login">
-              <Button variant="ghost" size="sm">
-                Login
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button variant="ghost" size="sm">
-                Sign Up
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
