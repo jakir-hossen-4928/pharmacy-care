@@ -1,28 +1,31 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ShoppingCart, Menu, X, Phone, Search, User } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const { currentUser, userDetails, logout } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const isMobile = useIsMobile();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setIsSearchOpen(false);
+    }
+  };
+
+  const handleAddToCart = () => {
+    toast.success("Item added to cart successfully!");
   };
 
   const handleLogout = async () => {
@@ -44,23 +47,39 @@ const Navbar = () => {
           </div>
         </Link>
 
-        {/* Search Form - Hidden on Mobile */}
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-8">
-          <div className="relative w-full">
-            <Input
-              type="text"
-              placeholder="Search Your Products..."
-              className="w-full rounded-md pr-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <Search size={20} className="text-gray-500" />
-            </button>
-          </div>
-        </form>
+        {/* Search Form - Hidden on Mobile unless toggled */}
+        {(!isMobile || isSearchOpen) && (
+          <form onSubmit={handleSearch} className={`${
+            isMobile ? "absolute top-full left-0 right-0 bg-white p-4 shadow-md" : 
+            "hidden md:flex flex-1 max-w-md mx-8"
+          }`}>
+            <div className="relative w-full">
+              <Input
+                type="text"
+                placeholder="Search medicines..."
+                className="w-full pr-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                autoFocus={isMobile}
+              />
+              <button type="submit" className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <Search size={20} className="text-gray-500" />
+              </button>
+            </div>
+          </form>
+        )}
 
-        {/* Contact & Cart - Hidden on Mobile */}
+        {/* Mobile Search Toggle */}
+        {isMobile && (
+          <button 
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            className="mr-4 text-gray-700"
+          >
+            {isSearchOpen ? <X size={24} /> : <Search size={24} />}
+          </button>
+        )}
+
+        {/* Contact & Cart - Modified for Mobile */}
         <div className="hidden md:flex items-center space-x-8">
           <div className="flex items-center">
             <Phone className="mr-2 h-5 w-5 text-pharmacy-primary" />
@@ -73,9 +92,8 @@ const Navbar = () => {
           <Link to="/cart" className="relative">
             <div className="flex items-center">
               <ShoppingCart className="h-6 w-6 text-gray-700" />
-              <div className="ml-2">
-                <div className="text-sm text-gray-600">Cart amount</div>
-                <div className="font-medium">0 TK</div>
+              <div className="ml-2 hidden md:block">
+                <div className="text-sm text-gray-600">Cart</div>
               </div>
             </div>
             <span className="absolute -top-2 -right-2 bg-pharmacy-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">

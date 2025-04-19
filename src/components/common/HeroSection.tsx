@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 
 const HeroSection = () => {
   return (
-    <div className="relative h-[600px] overflow-hidden">
+    <div className="relative h-[300px] md:h-[400px] overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
@@ -18,22 +18,22 @@ const HeroSection = () => {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 h-full flex items-center">
-        <div className="max-w-2xl text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+        <div className="max-w-xl text-white">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
             Your Health Is Our Priority
           </h1>
-          <p className="text-lg md:text-xl mb-8 opacity-90">
+          <p className="text-base md:text-lg mb-6 opacity-90">
             Browse our wide range of pharmaceutical products and get them delivered right to your doorstep.
           </p>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap gap-3">
             <Link to="/products">
-              <Button className="bg-pharmacy-primary hover:bg-pharmacy-dark text-white px-6 py-3 text-lg">
+              <Button className="bg-pharmacy-primary hover:bg-pharmacy-dark text-white">
                 Shop Now
-                <ChevronRight size={20} className="ml-2" />
+                <ChevronRight size={18} className="ml-1" />
               </Button>
             </Link>
             <Link to="/categories">
-              <Button variant="outline" className="bg-white/10 text-white border-white hover:bg-white/20 px-6 py-3 text-lg">
+              <Button variant="outline" className="bg-white/10 text-white border-white hover:bg-white/20">
                 Explore Categories
               </Button>
             </Link>
