@@ -52,6 +52,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				pharmacy: {
+					primary: '#008F7A',
+					secondary: '#4caf50',
+					accent: '#00bf8f',
+					light: '#e0f2f1',
+					dark: '#005a4c',
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
