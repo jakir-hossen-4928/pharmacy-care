@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { ShoppingCart, Menu, X, Phone, Search, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { toast } from "sonner";
 
 const Navbar = () => {
   const { currentUser, userDetails, logout } = useAuth();
@@ -69,19 +69,19 @@ const Navbar = () => {
           </form>
         )}
 
-        {/* Mobile Search Toggle */}
-        {isMobile && (
-          <button 
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="mr-4 text-gray-700"
-          >
-            {isSearchOpen ? <X size={24} /> : <Search size={24} />}
-          </button>
-        )}
+        {/* Mobile Search Toggle and Cart */}
+        <div className="flex items-center gap-4">
+          {isMobile && (
+            <button 
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="text-gray-700"
+            >
+              {isSearchOpen ? <X size={24} /> : <Search size={24} />}
+            </button>
+          )}
 
-        {/* Contact & Cart - Modified for Mobile */}
-        <div className="hidden md:flex items-center space-x-8">
-          <div className="flex items-center">
+          {/* Contact Info - Hidden on Mobile */}
+          <div className="hidden md:flex items-center">
             <Phone className="mr-2 h-5 w-5 text-pharmacy-primary" />
             <div>
               <div className="text-sm text-gray-600">Call Us Now:</div>
@@ -90,21 +90,59 @@ const Navbar = () => {
           </div>
 
           <Link to="/cart" className="relative">
-            <div className="flex items-center">
-              <ShoppingCart className="h-6 w-6 text-gray-700" />
-              <div className="ml-2 hidden md:block">
-                <div className="text-sm text-gray-600">Cart</div>
-              </div>
-            </div>
+            <ShoppingCart className="h-6 w-6 text-gray-700" />
             <span className="absolute -top-2 -right-2 bg-pharmacy-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
               0
             </span>
           </Link>
+
+          {/* Auth Section */}
+          {currentUser ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center">
+                  <User size={16} className="mr-2" />
+                  {userDetails?.name || "Account"}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  Dashboard
+                </DropdownMenuItem>
+                {userDetails?.role === "admin" && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    Admin Panel
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem onClick={() => navigate("/dashboard/profile")}>
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/dashboard/orders")}>
+                  My Orders
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button variant="default" size="sm" className="bg-pharmacy-primary hover:bg-pharmacy-dark" asChild>
+                <Link to="/signup">Sign Up</Link>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden text-gray-700"
+          className="md:hidden text-gray-700 ml-4"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

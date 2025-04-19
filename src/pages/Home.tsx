@@ -1,17 +1,15 @@
 
-import { useState } from "react";
 import { Link } from "react-router-dom";
-import HeroSection from "@/components/common/HeroSection";
 import MedicineList from "@/components/medicines/MedicineList";
-import SearchBar from "@/components/medicines/SearchBar";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { categories, mockMedicines } from "@/lib/mockData";
 import { Medicine } from "@/lib/types";
+import { toast } from "sonner";
 
 const Home = () => {
   const handleAddToCart = (medicine: Medicine) => {
-    console.log("Added to cart:", medicine);
+    toast.success(`${medicine.name} added to cart`);
   };
 
   const getCategoryMedicines = (categoryId: string, limit = 4) => {
@@ -25,17 +23,6 @@ const Home = () => {
 
   return (
     <div>
-      <HeroSection />
-
-      {/* Search Bar - Below Hero */}
-      <div className="bg-white shadow-md py-6">
-        <div className="container mx-auto px-4">
-          <div className="max-w-xl mx-auto">
-            <SearchBar />
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {/* Categories with Products */}
