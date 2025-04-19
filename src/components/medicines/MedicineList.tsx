@@ -1,9 +1,8 @@
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Medicine } from "@/lib/types";
 import MedicineCard from "./MedicineCard";
-import { toast } from "react-toastify";
 import { FileWarning } from "lucide-react";
+import { toast } from "sonner";
 
 interface MedicineListProps {
   medicines: Medicine[];
@@ -16,7 +15,7 @@ const MedicineList = ({
   medicines, 
   isLoading = false, 
   error,
-  onAddToCart 
+  onAddToCart
 }: MedicineListProps) => {
   const [cartItems, setCartItems] = useState<Medicine[]>([]);
 

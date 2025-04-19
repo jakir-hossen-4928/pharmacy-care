@@ -4,15 +4,9 @@ import MedicineList from "@/components/medicines/MedicineList";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { categories, mockMedicines } from "@/lib/mockData";
-import { Medicine } from "@/lib/types";
-import { toast } from "sonner";
 import Hero from "@/components/common/Hero";
 
 const Home = () => {
-  const handleAddToCart = (medicine: Medicine) => {
-    toast.success(`${medicine.name} added to cart`);
-  };
-
   const getCategoryMedicines = (categoryId: string, limit = 4) => {
     return mockMedicines
       .filter(med => {
@@ -25,13 +19,10 @@ const Home = () => {
   return (
     <div>
       <Hero />
-      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Categories with Products */}
         {categories.map((category) => {
           const categoryMedicines = getCategoryMedicines(category.id);
           
-          // Only show categories that have products
           if (categoryMedicines.length === 0) return null;
           
           return (
@@ -49,7 +40,6 @@ const Home = () => {
                 medicines={categoryMedicines}
                 isLoading={false}
                 error=""
-                onAddToCart={handleAddToCart}
               />
             </section>
           );
