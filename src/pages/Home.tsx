@@ -5,8 +5,18 @@ import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
 import { categories, mockMedicines } from "@/lib/mockData";
 import Hero from "@/components/common/Hero";
+import { useState } from "react";
+import { Medicine } from "@/lib/types";
+import { toast } from "sonner";
 
 const Home = () => {
+  const [cartItems, setCartItems] = useState<Medicine[]>([]);
+
+  const handleAddToCart = (medicine: Medicine) => {
+    setCartItems((prevItems) => [...prevItems, medicine]);
+    toast.success(`${medicine.name} added to cart`);
+  };
+
   const getCategoryMedicines = (categoryId: string, limit = 4) => {
     return mockMedicines
       .filter(med => {
@@ -40,6 +50,7 @@ const Home = () => {
                 medicines={categoryMedicines}
                 isLoading={false}
                 error=""
+                onAddToCart={handleAddToCart}
               />
             </section>
           );
