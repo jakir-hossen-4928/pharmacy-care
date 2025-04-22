@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
@@ -16,7 +15,7 @@ const SearchBar = ({ initialQuery = "", onSearch }: SearchBarProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (onSearch) {
       onSearch(query);
     } else {
@@ -41,7 +40,7 @@ const SearchBar = ({ initialQuery = "", onSearch }: SearchBarProps) => {
           onChange={(e) => setQuery(e.target.value)}
           className="pr-16"
         />
-        
+
         {query && (
           <button
             type="button"
@@ -51,7 +50,7 @@ const SearchBar = ({ initialQuery = "", onSearch }: SearchBarProps) => {
             <X size={18} />
           </button>
         )}
-        
+
         <Button
           type="submit"
           size="sm"

@@ -1,59 +1,54 @@
-
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { toast } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
-const SignUp = () => {
-  const { signup } = useAuth();
+const Login = () => {
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Get redirect path from location state or default to home
+  const from = location.state?.from?.pathname || "/";
+
   const formik = useFormik({
     initialValues: {
-      name: "",
       email: "",
-      phone: "",
       password: "",
     },
     validationSchema: Yup.object({
-      name: Yup.string()
-        .min(3, "Name must be at least 3 characters")
-        .required("Name is required"),
       email: Yup.string()
         .email("Invalid email address")
         .required("Email is required"),
-      phone: Yup.string()
-        .matches(/^\d{10,11}$/, "Phone must be 10-11 digits")
-        .required("Phone is required"),
       password: Yup.string()
-        .min(8, "Password must be at least 8 characters")
         .required("Password is required"),
     }),
     onSubmit: async (values) => {
       setIsLoading(true);
       try {
-        await signup(values.email, values.password, values.name, values.phone);
-        toast.success("Account created successfully!");
-        navigate("/login");
+        await login(values.email, values.password);
+        toast({
+          title: "Success",
+          description: "Logged in successfully! Welcome back.",
+        });
+        navigate(from, { replace: true });
       } catch (error: any) {
         console.error(error);
-        let errorMessage = "Failed to create account";
-        
-        // Firebase error codes
-        if (error.code === "auth/email-already-in-use") {
-          errorMessage = "Email is already in use";
-        }
-        
-        toast.error(errorMessage);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to login",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -67,32 +62,19 @@ const SignUp = () => {
           <Link to="/">
             <h1 className="text-3xl font-bold text-pharmacy-primary">Pharmacy Care</h1>
           </Link>
-          <h2 className="mt-2 text-lg text-gray-600">Create your account</h2>
+          <h2 className="mt-2 text-lg text-gray-600">Welcome back!</h2>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Sign Up</CardTitle>
+            <CardTitle className="text-2xl">Login</CardTitle>
             <CardDescription>
-              Enter your details to create an account
+              Enter your credentials to access your account
             </CardDescription>
           </CardHeader>
-          
+
           <form onSubmit={formik.handleSubmit}>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="John Doe"
-                  {...formik.getFieldProps("name")}
-                />
-                {formik.touched.name && formik.errors.name ? (
-                  <div className="text-sm text-red-500">{formik.errors.name}</div>
-                ) : null}
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -107,20 +89,15 @@ const SignUp = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="1234567890"
-                  {...formik.getFieldProps("phone")}
-                />
-                {formik.touched.phone && formik.errors.phone ? (
-                  <div className="text-sm text-red-500">{formik.errors.phone}</div>
-                ) : null}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex justify-between items-center">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    to="/reset-password"
+                    className="text-xs text-pharmacy-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Input
                     id="password"
@@ -145,7 +122,7 @@ const SignUp = () => {
                 ) : null}
               </div>
             </CardContent>
-            
+
             <CardFooter className="flex flex-col">
               <Button
                 type="submit"
@@ -155,17 +132,17 @@ const SignUp = () => {
                 {isLoading ? (
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-                    <span>Creating account...</span>
+                    <span>Logging in...</span>
                   </div>
                 ) : (
-                  "Create Account"
+                  "Login"
                 )}
               </Button>
-              
+
               <div className="mt-4 text-center text-sm text-gray-600">
-                Already have an account?{" "}
-                <Link to="/login" className="text-pharmacy-primary hover:underline">
-                  Login
+                Don't have an account?{" "}
+                <Link to="/signup" className="text-pharmacy-primary hover:underline">
+                  Sign up
                 </Link>
               </div>
             </CardFooter>
@@ -176,4 +153,4 @@ const SignUp = () => {
   );
 };
 
-export default SignUp;
+export default Login;

@@ -1,3 +1,15 @@
+import { Timestamp } from "firebase/firestore";
+
+export interface Address {
+  id: string;
+  type: "Home" | "Office" | "Shop";
+  street: string;
+  division: string;
+  district: string;
+  upazila: string;
+  postalCode: string;
+  isDefault?: boolean;
+}
 
 export interface User {
   uid: string;
@@ -6,33 +18,38 @@ export interface User {
   phone: string;
   role: "user" | "admin";
   createdAt: Date;
+  addresses?: Address[];
 }
 
 export interface Medicine {
   id: string;
   name: string;
   price: number;
-  category: string;
-  description: string;
+  wholesalePrice: number | null;
+  minWholesaleQuantity: number | null;
   imageUrl: string;
+  category: string;
   stock: number;
-  createdAt: Date;
   discount?: number;
+  description?: string;
 }
 
-export interface OrderItem {
-  medicineId: string;
+export interface CartItem {
+  id: string;
+  medicine: Medicine;
   quantity: number;
-  price: number;
-  medicineName?: string;
+  orderType: "retail" | "wholesale";
+  addedAt: Date;
 }
 
 export interface Order {
-  orderId: string;
+  id: string;
   userId: string;
-  items: OrderItem[];
+  items: CartItem[];
   total: number;
-  discount: number;
-  status: "Pending" | "Completed" | "Cancelled";
-  orderDate: Date;
+  deliveryCharge: number;
+  status: "pending" | "completed" | "cancelled";
+  orderType: "retail" | "wholesale";
+  createdAt: Date | Timestamp;
+  address: Address;
 }

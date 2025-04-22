@@ -1,0 +1,133 @@
+{
+  "categories": [
+    {
+      "name": "Creams & Topicals",
+      "subcategories": [
+        "Antibiotic Creams",
+        "Antifungal Creams",
+        "Corticosteroid Creams",
+        "Analgesic Creams",
+        "Antiseptic Creams",
+        "Moisturizing Creams",
+        "Baby Care Creams",
+        "Burn Relief Creams",
+        "Psoriasis Creams",
+        "Acne Treatment Gels"
+      ]
+    },
+    {
+      "name": "Syrups & Liquids",
+      "subcategories": [
+        "Cough Syrups",
+        "Antihistamine Syrups",
+        "Pediatric Syrups",
+        "Antacid Suspensions",
+        "Laxative Syrups",
+        "Vitamin Syrups",
+        "Herbal Tonics",
+        "Electrolyte Solutions",
+        "Antipyretic Syrups",
+        "Anti-diarrheal Suspensions"
+      ]
+    },
+    {
+      "name": "Oral Rehydration",
+      "subcategories": [
+        "Electrolyte Powders",
+        "Glucose Solutions",
+        "ORS Packets",
+        "Energy Drink Mixes",
+        "Vitamin C Powders",
+        "Rehydration Salts",
+        "Fruit-flavored Electrolytes",
+        "Pediatric Rehydration",
+        "Sports Drink Concentrates",
+        "Herbal Drink Mixes"
+      ]
+    },
+    {
+      "name": "Medical Solutions",
+      "subcategories": [
+        "IV Saline Solutions",
+        "Nasal Saline Sprays",
+        "Contact Lens Solutions",
+        "Wound Irrigation Solutions",
+        "Sterile Water for Injection",
+        "Dialysis Solutions",
+        "Ophthalmic Solutions",
+        "Antiseptic Washes",
+        "Disinfectant Solutions",
+        "Medical Grade Alcohol"
+      ]
+    },
+    {
+      "name": "Analgesics",
+      "subcategories": [
+        "Pain Relievers",
+        "Anti-inflammatory",
+        "Opioids",
+        "Non-opioid Analgesics"
+      ]
+    },
+    {
+      "name": "Antibiotics",
+      "subcategories": [
+        "Broad-spectrum",
+        "Narrow-spectrum",
+        "Penicillins",
+        "Cephalosporins",
+        "Macrolides",
+        "Tetracyclines"
+      ]
+    },
+    {
+      "name": "Antacids",
+      "subcategories": [
+        "Proton Pump Inhibitors",
+        "H2 Blockers",
+        "Calcium Carbonate",
+        "Magnesium Hydroxide"
+      ]
+    },
+    {
+      "name": "Vitamins & Supplements",
+      "subcategories": [
+        "Multivitamins",
+        "Vitamin D",
+        "Omega-3",
+        "Vitamins Tablet",
+        "Vitamins Syrup",
+        "Calcium Supplements",
+        "Iron Supplements"
+      ]
+    },
+    {
+      "name": "Dermatological",
+      "subcategories": [
+        "Antifungals",
+        "Corticosteroids",
+        "Acne Treatments",
+        "Skin Moisturizers"
+      ]
+    },
+    {
+      "name": "Surgical",
+      "subcategories": [
+        "Surgical Instruments",
+        "Sterile Gloves",
+        "Sutures & Needles",
+        "Surgical Dressings",
+        "Scalpels & Blades"
+      ]
+    },
+    {
+      "name": "Others",
+      "subcategories": [
+        "Medical Devices",
+        "First Aid Supplies",
+        "Diagnostic Tools",
+        "Personal Care Items"
+      ]
+    }
+  ]
+}

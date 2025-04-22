@@ -1,279 +1,272 @@
-
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { useNavigate } from "react-router-dom";
+import { getUserProfile } from "@/services/userProfieService";
+import { createOrder } from "@/services/userOrderService";
+import { clearCart } from "@/services/cartService";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage 
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-
-const formSchema = z.object({
-  fullName: z.string().min(3, "Full name must be at least 3 characters"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().min(8, "Phone number must be at least 8 characters"),
-  address: z.string().min(10, "Address must be at least 10 characters"),
-  city: z.string().min(2, "City must be at least 2 characters"),
-  postalCode: z.string().min(4, "Postal code must be at least 4 characters"),
-});
-
-type CheckoutFormValues = z.infer<typeof formSchema>;
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Address, User } from "@/lib/types";
+import { Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 const Checkout = () => {
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const { currentUser } = useAuth();
+  const { cartItems, cartCount, totalPrice, deliveryCharge: contextDeliveryCharge, clearCart: clearCartContext } = useCart();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
 
-  const form = useForm<CheckoutFormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      phone: "",
-      address: "",
-      city: "",
-      postalCode: "",
-    },
-  });
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [deliveryCharge, setDeliveryCharge] = useState<number>(contextDeliveryCharge);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fetchingProfile, setFetchingProfile] = useState(true);
 
-  if (cartItems.length === 0) {
-    navigate("/cart");
-    return null;
-  }
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!currentUser) {
+        setFetchingProfile(false);
+        navigate("/login");
+        return;
+      }
+      try {
+        setFetchingProfile(true);
+        const profile = await getUserProfile(currentUser.uid);
+        setUserProfile(profile);
+        if (profile?.addresses && profile.addresses.length > 0) {
+          const defaultAddress = profile.addresses.find((addr) => addr.isDefault) || profile.addresses[0];
+          setSelectedAddressId(defaultAddress.id);
+          updateDeliveryCharge(defaultAddress);
+        }
+      } catch (err) {
+        setError("Failed to load user profile.");
+        toast({
+          title: "Error",
+          description: "Failed to load user profile.",
+          variant: "destructive",
+        });
+      } finally {
+        setFetchingProfile(false);
+      }
+    };
+    fetchUserProfile();
+  }, [currentUser, navigate]);
 
-  const onSubmit = (values: CheckoutFormValues) => {
-    // In a real app, we would submit the order to the backend here
-    console.log("Order submitted:", { ...values, paymentMethod, cartItems, total: cartTotal });
-    
-    // Simulate successful order
-    setTimeout(() => {
-      clearCart();
-      toast.success("Order placed successfully!");
-      navigate("/order-success");
-    }, 1500);
+  const updateDeliveryCharge = (address: Address) => {
+    if (cartItems.every((item) => item.orderType === "wholesale")) {
+      setDeliveryCharge(0);
+    } else {
+      setDeliveryCharge(address.division.toLowerCase() === "dhaka" ? 80 : 120);
+    }
   };
 
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Checkout</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4">Shipping Information</h2>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="john@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input placeholder="+1234567890" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="address"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Address</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123 Main St" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input placeholder="New York" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="postalCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Postal Code</FormLabel>
-                          <FormControl>
-                            <Input placeholder="10001" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="mt-6">
-                    <h3 className="text-lg font-medium mb-2">Payment Method</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center">
-                        <input
-                          type="radio"
-                          id="cash"
-                          name="paymentMethod"
-                          value="cash"
-                          checked={paymentMethod === "cash"}
-                          onChange={() => setPaymentMethod("cash")}
-                          className="mr-2"
-                        />
-                        <label htmlFor="cash">Cash on Delivery</label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="radio"
-                          id="bkash"
-                          name="paymentMethod"
-                          value="bkash"
-                          checked={paymentMethod === "bkash"}
-                          onChange={() => setPaymentMethod("bkash")}
-                          className="mr-2"
-                        />
-                        <label htmlFor="bkash">bKash</label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="radio"
-                          id="nagad"
-                          name="paymentMethod"
-                          value="nagad"
-                          checked={paymentMethod === "nagad"}
-                          onChange={() => setPaymentMethod("nagad")}
-                          className="mr-2"
-                        />
-                        <label htmlFor="nagad">Nagad</label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-6 hidden md:block">
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-pharmacy-primary hover:bg-pharmacy-dark"
-                    >
-                      Place Order
-                    </Button>
-                  </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="lg:col-span-1">
-          <Card>
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4">Order Summary</h2>
-              
-              <div className="max-h-60 overflow-y-auto mb-4">
-                {cartItems.map((item) => {
-                  const discountedPrice = item.discount 
-                    ? item.price - (item.price * item.discount / 100) 
-                    : item.price;
-                  
-                  return (
-                    <div key={item.id} className="flex justify-between py-2 border-b">
-                      <div>
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-gray-500 block text-sm">Qty: {item.quantity}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="font-medium">
-                          {(discountedPrice * item.quantity).toFixed(2)} TK
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span>{cartTotal.toFixed(2)} TK</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Shipping</span>
-                  <span>Free</span>
-                </div>
-              </div>
-              
-              <Separator className="my-4" />
-              
-              <div className="flex justify-between font-semibold text-lg mb-6">
-                <span>Total</span>
-                <span>{cartTotal.toFixed(2)} TK</span>
-              </div>
-              
-              <Button 
-                onClick={form.handleSubmit(onSubmit)}
-                className="w-full bg-pharmacy-primary hover:bg-pharmacy-dark"
-              >
-                Place Order
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+  const handleAddressChange = (addressId: string) => {
+    setSelectedAddressId(addressId);
+    const selectedAddress = userProfile?.addresses?.find((addr) => addr.id === addressId);
+    if (selectedAddress) {
+      updateDeliveryCharge(selectedAddress);
+    }
+  };
+
+  const handlePlaceOrder = async () => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+
+    if (!selectedAddressId) {
+      setError("Please select a shipping address or add a new one.");
+      toast({
+        title: "Error",
+        description: "Please select a shipping address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedAddress = userProfile?.addresses?.find((addr) => addr.id === selectedAddressId);
+    if (!selectedAddress) {
+      setError("Selected address not found.");
+      toast({
+        title: "Error",
+        description: "Selected address not found.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const orderType = cartItems.every((item) => item.orderType === "wholesale") ? "wholesale" : "retail";
+      const subtotal = cartItems.reduce((sum, item) => {
+        const price = item.orderType === "wholesale" && item.medicine.wholesalePrice != null
+          ? item.medicine.wholesalePrice
+          : item.medicine.discount && item.medicine.discount > 0
+            ? item.medicine.price * (1 - item.medicine.discount / 100)
+            : item.medicine.price;
+        return sum + price * item.quantity;
+      }, 0);
+      const orderTotal = subtotal + deliveryCharge;
+      const orderId = await createOrder(
+        currentUser.uid,
+        cartItems,
+        orderTotal,
+        orderType,
+        selectedAddress,
+        deliveryCharge
+      );
+      await clearCart(currentUser.uid);
+      clearCartContext();
+      navigate(`/order-success?orderId=${orderId}`);
+      toast({
+        title: "Success",
+        description: "Order placed successfully!",
+      });
+    } catch (err: any) {
+      setError(err.message || "Failed to place order.");
+      toast({
+        title: "Error",
+        description: err.message || "Failed to place order.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetchingProfile) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="animate-spin text-primary" size={32} />
       </div>
-    </div>
+    );
+  }
+
+  if (cartCount === 0) {
+    return (
+      <div className="bg-gray-50 p-10 rounded-lg text-center">
+        <h3 className="text-xl font-medium text-gray-800 mb-2">Your Cart is Empty</h3>
+        <p className="text-gray-600">Add some items to your cart to place an order.</p>
+        <Button className="mt-4" onClick={() => navigate("/")}>
+          Shop Now
+        </Button>
+      </div>
+    );
+  }
+
+  const subtotal = cartItems.reduce((sum, item) => {
+    const price = item.orderType === "wholesale" && item.medicine.wholesalePrice != null
+      ? item.medicine.wholesalePrice
+      : item.medicine.discount && item.medicine.discount > 0
+        ? item.medicine.price * (1 - item.medicine.discount / 100)
+        : item.medicine.price;
+    return sum + price * item.quantity;
+  }, 0);
+
+  return (
+    <Card className="m-4 max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Place Order</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-medium mb-2">Select Shipping Address</h3>
+            {userProfile?.addresses && userProfile.addresses.length > 0 ? (
+              <div className="space-y-4">
+                <RadioGroup
+                  value={selectedAddressId || ""}
+                  onValueChange={handleAddressChange}
+                  className="space-y-2"
+                >
+                  {userProfile.addresses.map((address) => (
+                    <div key={address.id} className="flex items-center space-x-2 p-3 border rounded-lg">
+                      <RadioGroupItem value={address.id} id={address.id} />
+                      <Label htmlFor={address.id} className="flex-1">
+                        <div className="font-medium">{address.type}</div>
+                        <div className="text-sm text-gray-600">
+                          {address.street}, {address.upazila}, {address.district}, {address.division}, {address.postalCode}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Delivery Charge: {cartItems.every((item) => item.orderType === "wholesale") ? "Free" : address.division.toLowerCase() === "dhaka" ? "80 TK" : "120 TK"}
+                        </div>
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/dashboard/profile")}
+                  className="w-full"
+                  aria-label="Add new address"
+                >
+                  Add New Address
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-gray-600">No addresses found. Please add a new address.</p>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/dashboard/profile")}
+                  className="w-full"
+                  aria-label="Add new address"
+                >
+                  Add New Address
+                </Button>
+              </div>
+            )}
+            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium mb-2">Order Summary</h3>
+            {cartItems.map((item) => {
+              const price = item.orderType === "wholesale" && item.medicine.wholesalePrice != null
+                ? item.medicine.wholesalePrice
+                : item.medicine.discount && item.medicine.discount > 0
+                  ? item.medicine.price * (1 - item.medicine.discount / 100)
+                  : item.medicine.price;
+              return (
+                <div key={item.id} className="flex justify-between mb-2">
+                  <span>
+                    {item.medicine.name} ({item.orderType.charAt(0).toUpperCase() + item.orderType.slice(1)}, x{item.quantity})
+                  </span>
+                  <span>{(price * item.quantity).toFixed(2)} TK</span>
+                </div>
+              );
+            })}
+            <div className="flex justify-between mb-2">
+              <span>Delivery Charge</span>
+              <span>{deliveryCharge.toFixed(2)} TK</span>
+            </div>
+            <div className="flex justify-between font-medium mt-4">
+              <span>Total</span>
+              <span>{(subtotal + deliveryCharge).toFixed(2)} TK</span>
+            </div>
+          </div>
+
+          <Button
+            className="w-full bg-pharmacy-primary hover:bg-pharmacy-dark"
+            onClick={handlePlaceOrder}
+            disabled={loading || fetchingProfile}
+            aria-label="Place order"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                Processing...
+              </>
+            ) : (
+              "Place Order"
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,10 +1,16 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import MedicineList from "@/components/medicines/MedicineList";
-import { categories, mockMedicines } from "@/lib/mockData";
+import CategoryFilter from "@/components/medicines/CategoryFilter";
+import { getCategories, filterMedicinesByCategory } from "@/services/publicService";
 import { Medicine } from "@/lib/types";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+
+interface Category {
+  name: string;
+  subcategories: string[];
+}
 
 const CategoryPage = () => {
   const { categoryId, subcategory } = useParams();
@@ -12,76 +18,139 @@ const CategoryPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [categoryName, setCategoryName] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
   useEffect(() => {
-    setIsLoading(true);
-    try {
-      // Find category information
-      const categoryInfo = categories.find(cat => cat.id === categoryId);
-      
-      if (!categoryInfo) {
-        setError("Category not found");
-        setIsLoading(false);
-        return;
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+      } catch (err) {
+        toast({
+          title: "Error",
+          description: "Failed to load categories.",
+          variant: "destructive",
+        });
       }
+    };
+    fetchCategories();
+  }, []);
 
-      setCategoryName(categoryInfo.name);
-      
-      // Filter medicines based on category and subcategory
-      let filteredMedicines: Medicine[];
-      
-      if (subcategory) {
-        // Check if subcategory exists for this category
-        const subcategoryExists = categoryInfo.subcategories.some(
-          sub => sub.toLowerCase().replace(/\s+/g, '-') === subcategory
+  useEffect(() => {
+    const fetchMedicines = async () => {
+      setIsLoading(true);
+      try {
+        // Find category information
+        const categoryInfo = categories.find(
+          (cat) => cat.name.toLowerCase().replace(/\s+/g, "-") === categoryId
         );
-        
-        if (!subcategoryExists) {
-          setError("Subcategory not found");
+
+        if (!categoryInfo) {
+          setError("Category not found");
           setIsLoading(false);
           return;
         }
-        
-        // Convert subcategory from URL format to display format
-        const subcategoryName = categoryInfo.subcategories.find(
-          sub => sub.toLowerCase().replace(/\s+/g, '-') === subcategory
-        );
-        
-        // Filter medicines by category and potentially by subcategory in the future
-        // For now, we'll just filter by category since our mockData doesn't have subcategory field
-        filteredMedicines = mockMedicines.filter(med => med.category === categoryInfo.name);
-      } else {
-        // Filter medicines by category only
-        filteredMedicines = mockMedicines.filter(med => med.category === categoryInfo.name);
-      }
 
+        setCategoryName(categoryInfo.name);
+        setSelectedCategory(categoryInfo.name);
+
+        let subcategoryName: string | undefined;
+        if (subcategory) {
+          subcategoryName = categoryInfo.subcategories.find(
+            (sub) => sub.toLowerCase().replace(/\s+/g, "-") === subcategory
+          );
+          if (!subcategoryName) {
+            setError("Subcategory not found");
+            setIsLoading(false);
+            return;
+          }
+          setSelectedSubcategory(subcategoryName);
+        }
+
+        // Fetch medicines
+        const filteredMedicines = await filterMedicinesByCategory(
+          categoryInfo.name,
+          subcategoryName
+        );
+        setMedicines(filteredMedicines);
+      } catch (err) {
+        setError("Failed to load medicines. Please try again later.");
+        toast({
+          title: "Error",
+          description: "Failed to load medicines.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (categories.length > 0) {
+      fetchMedicines();
+    }
+  }, [categoryId, subcategory, categories]);
+
+  const handleFilterChange = async () => {
+    setIsLoading(true);
+    try {
+      const filteredMedicines = await filterMedicinesByCategory(
+        selectedCategory || undefined,
+        selectedSubcategory || undefined
+      );
       setMedicines(filteredMedicines);
-      setIsLoading(false);
     } catch (err) {
-      console.error("Error loading category data:", err);
-      setError("Failed to load medicines. Please try again later.");
+      setError("Failed to filter medicines.");
+      toast({
+        title: "Error",
+        description: "Failed to filter medicines.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
     }
-  }, [categoryId, subcategory]);
-
-  const handleAddToCart = (medicine: Medicine) => {
-    console.log("Added to cart:", medicine);
   };
+
+  useEffect(() => {
+    if (selectedCategory) {
+      handleFilterChange();
+    }
+  }, [selectedCategory, selectedSubcategory]);
+
+  const handleClearFilters = () => {
+    setSelectedCategory(null);
+    setSelectedSubcategory(null);
+    setMedicines([]);
+  };
+
+  if (isLoading && !medicines.length) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+        <Loader2 className="animate-spin text-pharmacy-primary" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <div className="flex items-center mb-6 text-sm">
-        <Link to="/" className="text-gray-500 hover:text-pharmacy-primary">Home</Link>
+        <Link to="/" className="text-gray-500 hover:text-pharmacy-primary">
+          Home
+        </Link>
         <ChevronRight size={16} className="mx-2 text-gray-400" />
-        {subcategory ? (
+        {subcategory && selectedSubcategory ? (
           <>
-            <Link to={`/category/${categoryId}`} className="text-gray-500 hover:text-pharmacy-primary">
+            <Link
+              to={`/category/${categoryId}`}
+              className="text-gray-500 hover:text-pharmacy-primary"
+            >
               {categoryName}
             </Link>
             <ChevronRight size={16} className="mx-2 text-gray-400" />
             <span className="text-pharmacy-primary font-medium">
-              {subcategory.replace(/-/g, ' ').toUpperCase()}
+              {selectedSubcategory}
             </span>
           </>
         ) : (
@@ -89,21 +158,23 @@ const CategoryPage = () => {
         )}
       </div>
 
-      {/* Category Title */}
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-pharmacy-primary">
-        {subcategory 
-          ? `${categoryName} / ${subcategory.replace(/-/g, ' ').toUpperCase()}`
-          : categoryName
-        }
-      </h1>
 
-      {/* Products */}
-      <MedicineList
-        medicines={medicines}
-        isLoading={isLoading}
-        error={error}
-        onAddToCart={handleAddToCart}
-      />
+
+      {/* Filter and Products */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1">
+          <CategoryFilter
+            selectedCategory={selectedCategory}
+            selectedSubcategory={selectedSubcategory}
+            onSelectCategory={setSelectedCategory}
+            onSelectSubcategory={setSelectedSubcategory}
+            onClearFilters={handleClearFilters}
+          />
+        </div>
+        <div className="lg:col-span-3">
+          <MedicineList medicines={medicines} isLoading={isLoading} error={error} />
+        </div>
+      </div>
     </div>
   );
 };

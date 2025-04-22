@@ -1,4 +1,4 @@
-
+import { useState, useEffect, useRef, memo } from "react";
 import { Medicine } from "@/lib/types";
 import MedicineCard from "./MedicineCard";
 import { FileWarning } from "lucide-react";
@@ -7,15 +7,33 @@ interface MedicineListProps {
   medicines: Medicine[];
   isLoading?: boolean;
   error?: string;
-  onAddToCart: (medicine: Medicine) => void;
 }
 
-const MedicineList = ({ 
-  medicines, 
-  isLoading = false, 
-  error,
-  onAddToCart
-}: MedicineListProps) => {
+const MedicineList = ({ medicines, isLoading = false, error }: MedicineListProps) => {
+  const [visibleCount, setVisibleCount] = useState(8);
+  const observerRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreCount = 8;
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && visibleCount < medicines.length) {
+          setVisibleCount((prev) => Math.min(prev + loadMoreCount, medicines.length));
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerRef.current) {
+      observer.observe(observerRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observer.unobserve(observerRef.current);
+      }
+    };
+  }, [visibleCount, medicines.length]);
 
   if (isLoading) {
     return (
@@ -57,16 +75,50 @@ const MedicineList = ({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {medicines.map((medicine) => (
-        <MedicineCard
-          key={medicine.id}
-          medicine={medicine}
-          onAddToCart={onAddToCart}
-        />
-      ))}
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {medicines.slice(0, visibleCount).map((medicine, index) => (
+          <div
+            key={medicine.id}
+            className="animate-fade-in"
+            style={{ animationDelay: `${index % loadMoreCount * 50}ms` }}
+          >
+            <MedicineCard medicine={medicine} />
+          </div>
+        ))}
+      </div>
+      {visibleCount < medicines.length && (
+        <div
+          ref={observerRef}
+          className="flex justify-center py-6"
+        >
+          <div className="animate-pulse flex items-center space-x-2">
+            <Loader2 className="animate-spin text-pharmacy-primary" size={20} />
+            <span className="text-sm text-gray-600">Loading more...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default MedicineList;
+// Inline CSS for fade-in animation
+const style = document.createElement("style");
+style.textContent = `
+  .animate-fade-in {
+    animation: fadeIn 300ms ease-in forwards;
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+document.head.appendChild(style);
+
+export default memo(MedicineList);

@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, Clock, Facebook, Twitter, Instagram, CreditCard, Truck, MessageCircle, ThumbsUp } from "lucide-react";
 
@@ -47,7 +46,7 @@ const Footer = () => {
       {/* Main Footer */}
       <div className="bg-gray-800 text-white py-10">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h3 className="text-xl font-bold mb-4">Pharmacy Care</h3>
               <p className="text-gray-300 mb-4">
@@ -88,40 +87,19 @@ const Footer = () => {
             </div>
 
             <div>
-              <h3 className="text-xl font-bold mb-4">Categories</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link to="/categories/dilutions" className="text-gray-300 hover:text-white">Dilutions & Potencies</Link>
-                </li>
-                <li>
-                  <Link to="/categories/tinctures" className="text-gray-300 hover:text-white">Mother Tinctures</Link>
-                </li>
-                <li>
-                  <Link to="/categories/biochemics" className="text-gray-300 hover:text-white">Biochemics</Link>
-                </li>
-                <li>
-                  <Link to="/categories/tablets" className="text-gray-300 hover:text-white">Tablets</Link>
-                </li>
-                <li>
-                  <Link to="/categories/cosmetics" className="text-gray-300 hover:text-white">Cosmetics Items</Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
               <h3 className="text-xl font-bold mb-4">Contact Info</h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <MapPin size={20} className="mr-2 mt-1 flex-shrink-0 text-pharmacy-accent" />
-                  <span className="text-gray-300">123 Pharmacy Street, Healthcare City, Country</span>
+                  <span className="text-gray-300">Basundhara, Dhaka, Bangladesh</span>
                 </li>
                 <li className="flex items-center">
                   <Phone size={20} className="mr-2 flex-shrink-0 text-pharmacy-accent" />
-                  <span className="text-gray-300">+8809638045501</span>
+                  <a href="https://wa.me/01842263370" className="text-gray-300 hover:text-white">01842263370 (WhatsApp)</a>
                 </li>
                 <li className="flex items-center">
                   <Mail size={20} className="mr-2 flex-shrink-0 text-pharmacy-accent" />
-                  <span className="text-gray-300">info@pharmacycare.com</span>
+                  <span className="text-gray-300">pharmacycare70@gmail.com</span>
                 </li>
                 <li className="flex items-center">
                   <Clock size={20} className="mr-2 flex-shrink-0 text-pharmacy-accent" />

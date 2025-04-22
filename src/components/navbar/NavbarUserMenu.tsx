@@ -28,9 +28,7 @@ const NavbarUserMenu = ({ currentUser, userDetails, onLogout }: NavbarUserMenuPr
         <Button variant="ghost" size="sm" asChild>
           <Link to="/login">Login</Link>
         </Button>
-        <Button variant="default" size="sm" className="bg-pharmacy-primary hover:bg-pharmacy-dark" asChild>
-          <Link to="/signup">Sign Up</Link>
-        </Button>
+
       </div>
     );
   }
@@ -40,7 +38,8 @@ const NavbarUserMenu = ({ currentUser, userDetails, onLogout }: NavbarUserMenuPr
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="flex items-center">
           <UserIcon size={16} className="mr-2" />
-          {userDetails?.name || "Account"}
+          {/* {userDetails?.name || "Account"} */}
+          {/* <span className="ml-1">{userDetails?.role === "admin" ? "Admin" : "User"}</span> */}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

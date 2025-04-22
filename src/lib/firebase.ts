@@ -5,13 +5,13 @@ import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC14s3NMpMSIgQ-9X9Q6W1aDd4wIoImCuU",
-  authDomain: "retail-parmecy.firebaseapp.com",
-  projectId: "retail-parmecy",
-  storageBucket: "retail-parmecy.firebasestorage.app",
-  messagingSenderId: "744635770752",
-  appId: "1:744635770752:web:bfd751cb72f48d8f2c0365",
-  measurementId: "G-2TM1DEVT4Z"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
