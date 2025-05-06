@@ -39,18 +39,21 @@ const Navbar = () => {
   return (
     <div className="sticky top-0 z-50 w-full bg-white shadow">
       <div className="flex justify-between items-center py-3 px-4 md:px-8 border-b">
-        <Link to="/" className="flex items-center space-x-2 min-w-0">
-          {/* Logo image */}
-          <img
-            src="/pharmacy-care-logo.png"
-            alt="Pharmacy Care Logo"
-            className="h-10 w-10 shrink-0"
-          />
+        <Link to="/" className="flex flex-col items-center min-w-0">
+          <div className="flex items-center space-x-2">
+            {/* Logo image */}
+            <img
+              src="/pharmacy-care-logo.png"
+              alt="Pharmacy Care Logo"
+              className="h-10 w-10 shrink-0"
+            />
 
-          {/* Title Text */}
-          <span className="text-lg md:text-2xl font-bold text-pharmacy-primary whitespace-nowrap truncate">
-            Pharmacy Care
-          </span>
+            {/* Title Text */}
+            <span className="text-lg md:text-2xl font-bold text-pharmacy-primary whitespace-nowrap truncate">
+              Pharmacy Care
+            </span>
+          </div>
+
         </Link>
 
 

@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -----------------------
+    // 🔹 Helper Functions
+    // -----------------------
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // Check if user is authenticated and has role 'admin'
+      // Use null check to avoid errors if user document doesn't exist
+      return isAuthenticated() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // -----------------------
+    // 🔹 Medicines (Products)
+    // -----------------------
+    match /medicines/{medicineId} {
+      allow read: if true; // Public can read individual medicines
+      allow create, update, delete: if isAdmin(); // Only admins can manage medicines
+    }
+
+    // Allow collection queries for medicines
+    match /medicines {
+      allow read: if true; // Public can query medicines collection
+    }
+
+    // -----------------------
+    // 🔹 Users
+    // -----------------------
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (isUser(userId) || isAdmin()); // Users can read their own data, admins can read all
+      allow update: if isUser(userId)
+        && request.resource.data.role == resource.data.role // Cannot change role
+        && request.resource.data.uid == resource.data.uid // Cannot change uid
+        && request.resource.data.createdAt == resource.data.createdAt; // Cannot change createdAt
+      allow create, delete: if isAdmin(); // Only admins can create/delete users
+    }
+
+    // Allow admins to query the users collection
+    match /users {
+      allow read: if isAdmin(); // Admins can query all users
+    }
+
+    // -----------------------
+    // 🔹 Carts
+    // -----------------------
+    match /carts/{userId} {
+      allow read, write: if isUser(userId) || isAdmin(); // Users can manage their own cart, admins can manage all
+      match /items/{itemId} {
+        allow read, create, update, delete: if isUser(userId) || isAdmin(); // Users can manage their cart items, admins can manage all
+      }
+    }
+
+    // Allow admins to query carts collection
+    match /carts {
+      allow read: if isAdmin(); // Admins can query all carts
+    }
+
+    // -----------------------
+    // 🔹 Orders
+    // -----------------------
+    match /orders/{orderId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid; // Users can create their own orders
+      allow read: if isAuthenticated()
+        && (isAdmin() || resource.data.userId == request.auth.uid); // Admins or order owner can read
+      allow update, delete: if isAdmin(); // Only admins can update/delete orders
+    }
+
+    // Allow collection queries for orders
+    match /orders {
+      allow read: if isAuthenticated() && (isAdmin() || request.auth != null); // Admins can query all, users can query their own (with client-side filtering)
+    }
+
+    // -----------------------
+    // 🔹 Invoices
+    // -----------------------
+    match /invoices/{invoiceId} {
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid; // Users can create their own invoices
+      allow read: if isAuthenticated()
+        && (isAdmin() || resource.data.userId == request.auth.uid); // Admins or invoice owner can read
+      allow update, delete: if isAdmin(); // Only admins can manage invoices
+    }
+
+    // Allow collection queries for invoices
+    match /invoices {
+      allow read: if isAdmin(); // Admins can query all invoices
+    }
+  }
+}

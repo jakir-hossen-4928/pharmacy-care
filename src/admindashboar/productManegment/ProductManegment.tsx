@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, useRef } from 'react';
 import { z } from 'zod';
 import { Medicine } from '@/lib/types';
 import { getAllMedicines, addMedicine, updateMedicine, deleteMedicine } from '@/services/adminProductService';
@@ -40,15 +40,25 @@ interface ExtendedMedicine extends Medicine {
   subcategory: string;
 }
 
-const ProductManegment: React.FC = () => {
+const ProductManagement: React.FC = () => {
   const [medicines, setMedicines] = useState<ExtendedMedicine[]>([]);
   const [filteredMedicines, setFilteredMedicines] = useState<ExtendedMedicine[]>([]);
+  const [displayedMedicines, setDisplayedMedicines] = useState<ExtendedMedicine[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof Omit<ExtendedMedicine, 'id'>, string>>>({});
   const [editingMedicine, setEditingMedicine] = useState<ExtendedMedicine | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const itemsPerPage = 6;
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
   const [formData, setFormData] = useState<Omit<ExtendedMedicine, 'id'>>({
     name: '',
     price: 0,
@@ -61,9 +71,6 @@ const ProductManegment: React.FC = () => {
     discount: undefined,
     description: '',
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [formErrors, setFormErrors] = useState<Partial<Record<keyof Omit<ExtendedMedicine, 'id'>, string>>>({});
   const { toast } = useToast();
 
   // Categories from categories.json
@@ -71,10 +78,26 @@ const ProductManegment: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [subcategories, setSubcategories] = useState<string[]>([]);
 
-  // Fetch medicines on mount
-  useEffect(() => {
-    fetchMedicines();
-  }, []);
+  // Fetch medicines
+  const fetchMedicines = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAllMedicines();
+      setMedicines(data as ExtendedMedicine[]);
+      setFilteredMedicines(data as ExtendedMedicine[]);
+      setDisplayedMedicines((data as ExtendedMedicine[]).slice(0, itemsPerPage));
+      setPage(1);
+      setHasMore(data.length > itemsPerPage);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch medicines.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter medicines when search term or category changes
   useEffect(() => {
@@ -88,7 +111,47 @@ const ProductManegment: React.FC = () => {
       filtered = filtered.filter((medicine) => medicine.category === categoryFilter);
     }
     setFilteredMedicines(filtered);
+    setDisplayedMedicines(filtered.slice(0, itemsPerPage));
+    setPage(1);
+    setHasMore(filtered.length > itemsPerPage);
   }, [searchTerm, categoryFilter, medicines]);
+
+  // Load more medicines when reaching the bottom
+  useEffect(() => {
+    if (!hasMore || isLoading) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [hasMore, isLoading]);
+
+  useEffect(() => {
+    if (page > 1) {
+      const newMedicines = filteredMedicines.slice(0, page * itemsPerPage);
+      setDisplayedMedicines(newMedicines);
+      setHasMore(newMedicines.length < filteredMedicines.length);
+    }
+  }, [page, filteredMedicines]);
+
+  // Fetch medicines on mount
+  useEffect(() => {
+    fetchMedicines();
+  }, []);
 
   // Update subcategories when category changes
   useEffect(() => {
@@ -100,23 +163,6 @@ const ProductManegment: React.FC = () => {
       setSubcategories([]);
     }
   }, [selectedCategory]);
-
-  const fetchMedicines = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getAllMedicines();
-      setMedicines(data as ExtendedMedicine[]);
-      setFilteredMedicines(data as ExtendedMedicine[]);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch medicines.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -151,7 +197,9 @@ const ProductManegment: React.FC = () => {
   };
 
   const uploadImage = async (): Promise<string> => {
-    if (!imageFile) return formData.imageUrl || '';
+    if (!imageFile) {
+      throw new Error('No image file selected');
+    }
 
     setIsUploading(true);
     const formDataUpload = new FormData();
@@ -195,13 +243,32 @@ const ProductManegment: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill all required fields correctly.',
-        variant: 'destructive',
-      });
-      return;
+
+    // Validate form data, excluding imageUrl if an image file is provided
+    const validationData = { ...formData };
+    if (imageFile) {
+      validationData.imageUrl = 'temp'; // Temporary value to pass validation
+    }
+
+    try {
+      medicineSchema.parse(validationData);
+      setFormErrors({});
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: Partial<Record<keyof Omit<ExtendedMedicine, 'id'>, string>> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            errors[err.path[0] as keyof Omit<ExtendedMedicine, 'id'>] = err.message;
+          }
+        });
+        setFormErrors(errors);
+        toast({
+          title: 'Validation Error',
+          description: 'Please fill all required fields correctly.',
+          variant: 'destructive',
+        });
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -209,6 +276,15 @@ const ProductManegment: React.FC = () => {
       let imageUrl = formData.imageUrl;
       if (imageFile) {
         imageUrl = await uploadImage();
+      } else if (!editingMedicine && !imageUrl) {
+        setFormErrors((prev) => ({ ...prev, imageUrl: 'Image is required' }));
+        toast({
+          title: 'Error',
+          description: 'Please upload an image.',
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
       }
 
       const medicineData = { ...formData, imageUrl };
@@ -402,7 +478,6 @@ const ProductManegment: React.FC = () => {
                       disabled={isLoading || isUploading || !selectedCategory}
                     >
                       <SelectTrigger className={formErrors.subcategory ? 'border-red-500' : ''}>
-                        {/* Show current value or placeholder */}
                         <SelectValue placeholder="Select subcategory">
                           {formData.subcategory || editingMedicine?.subcategory}
                         </SelectValue>
@@ -494,21 +569,27 @@ const ProductManegment: React.FC = () => {
                       value={formData.description}
                       onChange={handleInputChange}
                       disabled={isLoading || isUploading}
-                      className={`w-full border rounded p-2 min-h-[100px] ${formErrors.description ? 'border-red-500' : ''
-                        }`}
+                      className={`w-full border rounded p-2 min-h-[100px] ${formErrors.description ? 'border-red-500' : ''}`}
                     />
                     {formErrors.description && <p className="text-red-500 text-sm">{formErrors.description}</p>}
                   </div>
                   <div>
                     <Label htmlFor="image">Image *</Label>
-                    <Input
-                      id="image"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      disabled={isLoading || isUploading}
-                      className={formErrors.imageUrl ? 'border-red-500' : ''}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        disabled={isLoading || isUploading}
+                        className={formErrors.imageUrl ? 'border-red-500' : ''}
+                      />
+                      {isUploading && (
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                          <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
+                        </div>
+                      )}
+                    </div>
                     {(previewImage || formData.imageUrl) && (
                       <img
                         src={previewImage || formData.imageUrl}
@@ -540,7 +621,7 @@ const ProductManegment: React.FC = () => {
             </Dialog>
           </div>
 
-          {isLoading ? (
+          {isLoading && displayedMedicines.length === 0 ? (
             <div className="flex justify-center">
               <Loading />
             </div>
@@ -549,7 +630,7 @@ const ProductManegment: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Image</TableHead>
+                    <TableHead>Product</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
@@ -561,71 +642,107 @@ const ProductManegment: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredMedicines.map((medicine) => (
-                    <TableRow key={medicine.id}>
-                      <TableCell>
-                        {medicine.imageUrl && (
-                          <img
-                            src={medicine.imageUrl}
-                            alt={medicine.name}
-                            className="h-12 w-12 object-cover rounded"
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {medicine.name}
-                          {medicine.wholesalePrice && (
-                            <Badge variant="secondary">Wholesale</Badge>
+                  {displayedMedicines.map((medicine) => {
+                    const discountedRetailPrice = medicine.discount
+                      ? (medicine.price * (100 - medicine.discount)) / 100
+                      : medicine.price;
+                    const wholesaleDiscountPercentage = medicine.wholesalePrice
+                      ? ((medicine.price - medicine.wholesalePrice) / medicine.price) * 100
+                      : null;
+
+                    return (
+                      <TableRow key={medicine.id}>
+                        <TableCell>
+                          {medicine.imageUrl && (
+                            <img
+                              src={medicine.imageUrl}
+                              alt={medicine.name}
+                              className="h-12 w-12 object-cover rounded"
+                            />
                           )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span>{medicine.category}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {medicine.subcategory}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>৳{medicine.price.toFixed(2)}</TableCell>
-                      <TableCell>
-                        {medicine.wholesalePrice ? `৳${medicine.wholesalePrice.toFixed(2)}` : 'N/A'}
-                      </TableCell>
-                      <TableCell>{medicine.minWholesaleQuantity ?? 'N/A'}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {medicine.stock}
-                          {medicine.stock < 10 && (
-                            <Badge variant="destructive">Low Stock</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{medicine.discount ? `${medicine.discount}%` : 'N/A'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(medicine)}
-                            disabled={isLoading || isUploading}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(medicine.id)}
-                            disabled={isLoading || isUploading}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {medicine.name}
+                            {medicine.wholesalePrice && (
+                              <Badge variant="secondary">Wholesale</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span>{medicine.category}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {medicine.subcategory}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            ৳{medicine.price.toFixed(2)}
+                            {medicine.discount && (
+                                <Badge className="bg-green-100 text-green-800">
+                                After Discount: ৳{discountedRetailPrice.toFixed(2)}
+                                </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                            {medicine.wholesalePrice ? (
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
+                              <span className="font-medium text-blue-600 dark:text-blue-400">
+                              ৳{medicine.wholesalePrice.toFixed(2)}
+                              </span>
+                              {wholesaleDiscountPercentage && (
+                              <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 text-xs whitespace-nowrap">
+                                Discount:{wholesaleDiscountPercentage.toFixed(0)}%
+                              </Badge>
+                              )}
+                            </div>
+                            ) : (
+                            <span className="text-gray-500 dark:text-gray-400 italic">N/A</span>
+                            )}
+                        </TableCell>
+                        <TableCell>{medicine.minWholesaleQuantity ?? 'N/A'}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {medicine.stock}
+                            {medicine.stock < 10 && (
+                              <Badge variant="destructive">Low Stock</Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{medicine.discount ? `${medicine.discount}%` : 'N/A'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(medicine)}
+                              disabled={isLoading || isUploading}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(medicine.id)}
+                              disabled={isLoading || isUploading}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
+              {hasMore && (
+                <div ref={loadMoreRef} className="flex justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -634,4 +751,4 @@ const ProductManegment: React.FC = () => {
   );
 };
 
-export default ProductManegment;
+export default ProductManagement;
